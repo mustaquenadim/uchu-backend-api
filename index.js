@@ -39,26 +39,10 @@ client.connect(err => {
     })
 
     // delete service
-    app.delete('/deleteService/:id', (req, res) => {
+    app.delete('/deleteBlog/:id', (req, res) => {
         const id = ObjectID(req.params.id);
         blogs.findOneAndDelete({_id: id})
         .then(document => res.send(document.value))
-    })
-
-    // Admin Database
-    const adminCollection = client.db("blogsite").collection("admin");
-    app.post('/makeAdmin', (req, res) => {
-        adminCollection.insertOne({ ...req.body })
-        .then(result => {
-            res.send(result.insertedCount > 0)
-        });
-    })
-
-    app.get('/checkUserRole', (req, res) => {
-        adminCollection.find({email: req.query.email})
-        .toArray((error, documents) => {
-            res.send(documents.length > 0)
-        });
     })
 });
 
