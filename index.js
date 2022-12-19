@@ -1,49 +1,51 @@
 const express = require('express');
 const cors = require('cors');
-const bodyParser = require('body-parser');
 require('dotenv').config();
 const MongoClient = require('mongodb').MongoClient;
 const ObjectID = require('mongodb').ObjectID;
 
-const port = 5000;
-
 const app = express();
+
+app.use(express.json());
+
 app.use(cors());
-app.use(bodyParser.json());
+
 app.get('/', (req, res) => {
-    res.send('Blogsite API');
+    res.send('YaY! 🥳 Route is working!');
 });
 
-const uri = `mongodb+srv://${process.env.DB_USER}:${process.env.DB_PASS}@cluster0.u704q.mongodb.net/${process.env.DB_NAME}?retryWrites=true&w=majority`;
-const client = new MongoClient(uri, { useNewUrlParser: true, useUnifiedTopology: true });
+const client = new MongoClient(process.env.MONGODB_URL, { useNewUrlParser: true, useUnifiedTopology: true });
 client.connect(err => {
-    console.log('error!', err);
+    if (err) {
+        console.log('error!', err);
+    }
+    app.listen(process.env.PORT, () => {
+        console.log(`Server listening on http://localhost:${process.env.PORT}`);
+    });
 
-    // blogs Database
-    const blogs = client.db("blogsite").collection("blogs");
+    // collections
+    const articleCollection = client.db("uchu").collection("articles");
 
-    app.post('/addBlog', (req, res) => {
-        const newBlog = req.body;
-        blogs.insertOne(newBlog)
-        .then(result => {
-            console.log('inserted count', result.insertedCount);
-            res.send(result.insertedCount > 0);
-        })
+    // article api's
+    app.post('/article', (req, res) => {
+        const newArticle = req.body;
+        articleCollection.insertOne(newArticle)
+            .then(result => {
+                console.log('inserted count', result.insertedCount);
+                res.send(result.insertedCount > 0);
+            })
     })
 
-    app.get('/blogs', (req, res) => {
-        blogs.find()
-        .toArray((err, blog) => {
-            res.send(blog);
-        })
+    app.get('/article', (req, res) => {
+        articleCollection.find()
+            .toArray((err, data) => {
+                res.send(data);
+            })
     })
 
-    // delete service
-    app.delete('/deleteBlog/:id', (req, res) => {
+    app.delete('/article/:id', (req, res) => {
         const id = ObjectID(req.params.id);
-        blogs.findOneAndDelete({_id: id})
-        .then(document => res.send(document.value))
+        articleCollection.findOneAndDelete({ _id: id })
+            .then(document => res.send(document.value))
     })
 });
-
-app.listen(process.env.PORT || port);
